@@ -3,7 +3,7 @@ from utils import hamming_score
 
 class Classical_HN:
     def __init__(self, args):
-        self.num_neurons = args.num_neurons
+        self.num_neurons = args.pattern_size
         self.weights = torch.zeros((self.num_neurons, self.num_neurons))
 
     def train(self, patterns):
