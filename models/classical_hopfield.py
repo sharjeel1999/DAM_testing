@@ -1,5 +1,5 @@
 import torch
-import cv2
+from utils import hamming_score
 
 class Classical_HN:
     def __init__(self, args):
@@ -15,12 +15,19 @@ class Classical_HN:
         for i in range(self.num_neurons):
             self.weights[i, i] = 0
 
+    def calculate_similarity(self, generated, original):
+        return hamming_score(generated, original)
+
     def recall(self, pattern, steps=5):
         pattern = torch.tensor(pattern, dtype=torch.float32)
+        copied_pattern = pattern.clone()
 
-        for _ in range(steps):
+        print(f'Recovering pattern for {steps} steps.')
+        for s in range(steps):
             for i in range(self.num_neurons):
                 weighted_sum = torch.matmul(self.weights[i], pattern)
                 pattern[i] = 1.0 if weighted_sum >= 0 else -1.0
+            hamming = self.calculate_similarity(pattern, copied_pattern)
+            print(f'Step: {s}, Hamming Score: {hamming}')
         return pattern
 
