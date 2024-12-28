@@ -2,9 +2,9 @@ import torch
 import cv2
 
 class Classical_HN:
-    def __init__(self, num_neurons):
-        self.num_neurons = num_neurons
-        self.weights = torch.zeros((num_neurons, num_neurons))
+    def __init__(self, args):
+        self.num_neurons = args.num_neurons
+        self.weights = torch.zeros((self.num_neurons, self.num_neurons))
 
     def train(self, patterns):
         for pattern in patterns:
