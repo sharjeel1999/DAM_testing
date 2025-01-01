@@ -6,11 +6,18 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset
 
+from utils import perturb_pattern
 
-class Full_dataset(Dataset):
-    def __init__(self, folder_path, num_images):
-        self.folder_path = folder_path
-        self.num_images = num_images
+class Image_dataset(Dataset):
+    def __init__(self, args, corrupt_flag = False):
+        self.folder_path = args.folder_path
+        self.num_images = args.num_images
+
+        # Corruption
+        self.corrupt_flag = corrupt_flag
+        self.perturb_percent = args.perturb_percent
+        self.crop_percent = args.crop_percent
+        self.corrupt_type = args.corrupt_type
 
         self.collect_to_array()
 
@@ -27,6 +34,16 @@ class Full_dataset(Dataset):
         return len(self.image_array)
     
     def __getitem__(self, index):
-        image = self.image_array[index]
+        inputs = {}
+        if self.corrupt_flag == True:
+            image = self.image_array[index]
+            perturbed_image = perturb_pattern(image)
 
-        return image
+            inputs['image'] = image
+            inputs['perturbed'] = perturbed_image
+            return inputs
+        
+        else:
+            image = self.image_array[index]
+            inputs['image'] = image
+            return inputs
