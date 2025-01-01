@@ -1,4 +1,4 @@
-from classical_hopfield import Classical_HN
+from models.classical_hopfield import Classical_HN
 
 
 def build_model(args):

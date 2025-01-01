@@ -6,8 +6,10 @@ class Classical_HN:
         self.num_neurons = args.pattern_size
         self.weights = torch.zeros((self.num_neurons, self.num_neurons))
 
-    def train(self, patterns):
-        for pattern in patterns:
+    def train(self, pattern_loader):
+        for pattern_dict in pattern_loader:
+            pattern = torch.squeeze(pattern_dict['image'])
+            print('input pattern shape: ', pattern.shape)
             pattern = torch.tensor(pattern, dtype=torch.float32)
             self.weights += torch.outer(pattern, pattern)
 

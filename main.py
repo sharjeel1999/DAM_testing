@@ -19,7 +19,7 @@ parser.add_argument('--model', default = 'classical', type = str)
 parser.add_argument('--pattern_size', default = 36, type = int)
 
 # Data details
-parser.add_argument('--folder_path', default = '\\test_images', type = str)
+parser.add_argument('--folder_path', default = 'test_images', type = str)
 parser.add_argument('--num_images', default = 4, type = int)
 parser.add_argument('--batch_size', default = 4, type = int)
 parser.add_argument('--perturb_percent', default = 0.2, type = float)
@@ -28,7 +28,9 @@ parser.add_argument('--corrupt_type', default = 'both', type = str)
 
 args = parser.parse_args()
 
-
-
 model = build_model(args)
+print(model)
 
+training_loader = create_loader(args, corrupt_flag = False)
+model.train(training_loader)
+print('--- Done training ---')
