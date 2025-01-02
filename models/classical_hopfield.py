@@ -9,9 +9,11 @@ class Classical_HN:
     def train(self, pattern_loader):
         for pattern_dict in pattern_loader:
             pattern = torch.squeeze(pattern_dict['image'])
-            print('input pattern shape: ', pattern.shape)
-            pattern = torch.tensor(pattern, dtype=torch.float32)
-            self.weights += torch.outer(pattern, pattern)
+            print('input pattern shape: ', pattern.shape, pattern_dict['image'].shape)
+            pattern = torch.tensor(pattern, dtype = torch.float32)
+            # print('input pattern shape: ', pattern.shape)
+            pattern_T = torch.transpose(pattern, 0, 1)
+            self.weights += torch.matmul(pattern_T, pattern) #torch.outer(pattern, pattern)
 
         # Remove self-connections
         for i in range(self.num_neurons):

@@ -25,7 +25,7 @@ class Image_dataset(Dataset):
         self.image_array = []
 
         for i, name in enumerate(os.listdir(self.folder_path)):
-            if i <= self.num_images:
+            if i < self.num_images:
                 image_path = os.path.join(self.folder_path, name)
                 image = cv2.imread(image_path, 0)
                 self.image_array.append(image)
