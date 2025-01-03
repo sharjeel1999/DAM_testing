@@ -10,6 +10,7 @@ from utils import perturb_pattern, Thresh
 
 class Image_dataset(Dataset):
     def __init__(self, args, corrupt_flag = False):
+        self.args = args
         self.folder_path = os.path.join(os.getcwd(), args.folder_path)
         self.num_images = args.num_images
 
@@ -38,7 +39,7 @@ class Image_dataset(Dataset):
         if self.corrupt_flag == True:
             image = self.image_array[index]
             image = Thresh(np.array([image.flatten()-0.5]))
-            perturbed_image = perturb_pattern(image)
+            perturbed_image = perturb_pattern(image, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
             inputs['image'] = image
             inputs['perturbed'] = perturbed_image

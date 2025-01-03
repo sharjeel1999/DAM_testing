@@ -4,11 +4,11 @@ from torch.utils.data import DataLoader
 from models import build_model
 from data_loaders import Image_dataset
 
-def create_loader(args, corrupt_flag):
+def create_loader(args, corrupt_flag, batch_size):
     assert args.num_images == args.batch_size
 
     dataset = Image_dataset(args, corrupt_flag)
-    data_loader = DataLoader(dataset, batch_size = args.batch_size, shuffle = False, pin_memory = True)
+    data_loader = DataLoader(dataset, batch_size = batch_size, shuffle = False, pin_memory = True)
 
     return data_loader
 
@@ -31,6 +31,9 @@ args = parser.parse_args()
 model = build_model(args)
 print(model)
 
-training_loader = create_loader(args, corrupt_flag = False)
+training_loader = create_loader(args, corrupt_flag = False, batch_size = args.batch_size)
 model.train(training_loader)
 print('--- Done training ---')
+
+testing_loader = create_loader(args, corrupt_flag = True, batch_size = 1)
+model.recall(testing_loader)

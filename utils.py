@@ -79,10 +79,10 @@ def perturb_pattern(image, perturb_percentage, crop_percentage, corrupt_type):
     
     x = image.shape[1]
     k = 1 - crop_percentage
-
+    kk = int(x*k)
     if corrupt_type == 'both':
         perturbed_image = Perturb(image, p = perturb_percentage)
-        perturbed_image[:, k:] = -1
+        perturbed_image[:, kk:] = -1
         return perturbed_image
     
     if corrupt_type == 'perturb':
