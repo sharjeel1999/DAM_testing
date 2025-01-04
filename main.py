@@ -20,6 +20,7 @@ parser.add_argument('--pattern_size', default = 36, type = int)
 
 # Data details
 parser.add_argument('--folder_path', default = 'test_images', type = str)
+parser.add_argument('--input_shape', default = 6)
 parser.add_argument('--num_images', default = 4, type = int)
 parser.add_argument('--batch_size', default = 4, type = int)
 parser.add_argument('--perturb_percent', default = 0.2, type = float)
@@ -28,7 +29,9 @@ parser.add_argument('--corrupt_type', default = 'both', type = str)
 
 args = parser.parse_args()
 
-model = build_model(args)
+weight_folder = 'All_saves\\classical_hopfield\\weights.pth'
+visual_folder = 'G:\\Associative_memory\\DAM_experimentation_repo\\All_saves\\classical_hopfield\\visual_saves'
+model = build_model(args, weight_folder, visual_folder)
 print(model)
 
 training_loader = create_loader(args, corrupt_flag = False, batch_size = args.batch_size)
