@@ -3,10 +3,13 @@ import cv2
 import numpy as np
 
 import torch
-from utils import hamming_score
 
-class Classical_HN:
+from Hopfield_core import Hopfield_Core
+
+class Classical_HN(Hopfield_Core):
     def __init__(self, args, weight_folder, visual_folder):
+
+        super(Classical_HN, self).__init__(args, weight_folder, visual_folder)
         self.args = args
         self.num_neurons = args.pattern_size
         self.weight_folder = weight_folder
@@ -28,30 +31,6 @@ class Classical_HN:
             self.weights[i, i] = 0
 
         self.save_weights()
-
-    def calculate_similarity(self, generated, original):
-        return hamming_score(generated, original)
-    
-    def save_weights(self):
-        torch.save(self.weights, os.path.join(os.getcwd(), self.weight_folder))
-
-    def load_weights(self):
-        self.weights = torch.load(os.path.join(os.getcwd(), self.weight_folder))
-
-    def save_files(self, pattern, perturbed, i):
-        pattern = pattern.detach().cpu().numpy()
-        perturbed = perturbed.detach().cpu().numpy()
-        pattern = pattern.reshape(self.args.input_shape, self.args.input_shape)
-        perturbed = perturbed.reshape(self.args.input_shape, self.args.input_shape)
-
-        pattern = np.where(pattern == 1, 100, 0)
-        perturbed = np.where(perturbed == 1, 100, 0)
-        print('uniques: ', np.unique(pattern), np.unique(perturbed))
-
-        name_original = str(i) + '_Original.png'
-        name_recovered = str(i) + '_Recovered.png'
-        cv2.imwrite(os.path.join(self.visual_folder, name_original), pattern)
-        cv2.imwrite(os.path.join(self.visual_folder, name_recovered), perturbed)
 
     def recall(self, pattern_loader, steps=5):
         self.load_weights()
