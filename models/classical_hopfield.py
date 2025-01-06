@@ -4,7 +4,7 @@ import numpy as np
 
 import torch
 
-from Hopfield_core import Hopfield_Core
+from models.Hopfield_core import Hopfield_Core
 
 class Classical_HN(Hopfield_Core):
     def __init__(self, args, weight_folder, visual_folder):
