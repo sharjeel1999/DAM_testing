@@ -5,8 +5,9 @@ import torch.optim as optim
 from typing import Optional, Tuple, Union
 
 from DAM_core import HopfieldCore
+from models.Hopfield_core import Hopfield_Core
 
-class Continous_DAM():
+class Continous_DAM(Hopfield_Core):
     def __init__(self,
                  args,
                  weight_folder,
@@ -83,5 +84,30 @@ class Continous_DAM():
             loss.backward()
             self.optimizer.step()
 
-    def recall(self, pattern_loader):
+        self.save_weights()
+
+    def recall(self, pattern_loader, steps=5):
         print('implement recall')
+
+        self.load_weights()
+        weights_transpose = self.weights.transpose(1, 0)
+
+        for m, pattern_dict in enumerate(pattern_loader):
+            print('index: ', m)
+            pattern = torch.squeeze(pattern_dict['image'])
+            perturbed_pattern = torch.squeeze(pattern_dict['perturbed'])
+            print('Pattern shapes: ', pattern.shape, perturbed_pattern.shape)
+        
+            pattern = torch.tensor(pattern, dtype=torch.float32)
+            perturbed_pattern = torch.tensor(perturbed_pattern, dtype=torch.float32)
+            copied_pattern = pattern.clone()
+
+            print(f'Recovering pattern for {steps} steps.')
+            for s in range(steps):
+                perturbed_pattern = self.association_core(query = weights_transpose, key = perturbed_pattern, value = self.weights)
+
+                hamming = self.calculate_similarity(perturbed_pattern, pattern)
+                print(f'Step: {s}, Hamming Score: {hamming}')
+
+            self.save_files(pattern, perturbed_pattern, m)
+
