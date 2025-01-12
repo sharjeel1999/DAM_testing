@@ -1,16 +1,20 @@
 import torch
 import torch.nn as nn
 from torch import Tensor
+import torch.optim as optim
 from typing import Optional, Tuple, Union
 
 from DAM_core import HopfieldCore
 
 class Continous_DAM():
     def __init__(self,
-                 input_size: Optional[int] = None,
-                 hidden_size: Optional[int] = None,
-                 output_size: Optional[int] = None,
-                 pattern_size: Optional[int] = None,
+                 args,
+                 weight_folder,
+                 visual_folder,
+                #  input_size: Optional[int] = None,
+                #  hidden_size: Optional[int] = None,
+                #  output_size: Optional[int] = None,
+                #  pattern_size: Optional[int] = None,
                  num_heads: int = 1,
                  scaling: Optional[Union[float, Tensor]] = None,
                  update_steps_max: Optional[Union[int, Tensor]] = 0,
@@ -43,6 +47,13 @@ class Continous_DAM():
                  add_zero_association: bool = False,
                  disable_out_projection: bool = False):
         
+        super(Continous_DAM, self).__init__(args, weight_folder, visual_folder)
+
+        input_size = args.input_shape
+        hidden_size = args.pattern_size
+        pattern_size = args.pattern_size
+        output_size = args.pattern_size
+
         self.association_core = HopfieldCore(
             embed_dim=input_size, num_heads=num_heads, dropout=dropout, bias=input_bias,
             add_bias_kv=concat_bias_pattern, add_zero_attn=add_zero_association, kdim=stored_pattern_size,
@@ -53,7 +64,11 @@ class Continous_DAM():
             normalize_pattern_affine=normalize_hopfield_space_affine,
             normalize_pattern_eps=normalize_hopfield_space_eps)
         
-        self.weights = 0
+        self.weights = torch.zeros((self.num_neurons, self.num_neurons))
+        self.weights_transpose = self.weights.transpose(1, 0)
+
+        self.optimizer = optim.Adam(self.weights, 0.001)
+        self.loss_function = nn.HuberLoss(delta=1.0, reduction='mean')
         
     def train(self, pattern_loader):
         print('implement train')
@@ -61,6 +76,12 @@ class Continous_DAM():
         for pattern_dict in pattern_loader:
             pattern = torch.squeeze(pattern_dict['image'])
             associated_output = self.association_core(query = self.weights_transpose, key = pattern, value = self.weights)
+
+            loss = self.loss_function(associated_output, pattern)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
     def recall(self, pattern_loader):
         print('implement recall')

@@ -1,8 +1,8 @@
 from models.classical_hopfield import Classical_HN
-
+from DAM import Continous_DAM
 
 def build_model(args, weights_folder, visual_folder):
     if args.model == 'classical':
         return Classical_HN(args, weights_folder, visual_folder)
     elif args.model == 'DAM':
-        return 0
+        return Continous_DAM(args, weights_folder, visual_folder)

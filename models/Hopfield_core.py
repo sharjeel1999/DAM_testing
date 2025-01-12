@@ -6,10 +6,10 @@ import numpy as np
 from utils import hamming_score
 
 class Hopfield_Core():
-    def __init__(self, args, weight_folder, save_folder):
+    def __init__(self, args, weight_folder, visual_folder):
         self.args = args
         self.weight_folder = weight_folder
-        self.save_folder = save_folder
+        self.visual_folder = visual_folder
 
     def calculate_similarity(self, generated, original):
         return hamming_score(generated, original)
