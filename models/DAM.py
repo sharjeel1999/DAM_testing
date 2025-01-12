@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from torch import Tensor
 from typing import Optional, Tuple, Union
@@ -52,3 +53,14 @@ class Continous_DAM():
             normalize_pattern_affine=normalize_hopfield_space_affine,
             normalize_pattern_eps=normalize_hopfield_space_eps)
         
+        self.weights = 0
+        
+    def train(self, pattern_loader):
+        print('implement train')
+
+        for pattern_dict in pattern_loader:
+            pattern = torch.squeeze(pattern_dict['image'])
+            associated_output = self.association_core(query = self.weights_transpose, key = pattern, value = self.weights)
+
+    def recall(self, pattern_loader):
+        print('implement recall')

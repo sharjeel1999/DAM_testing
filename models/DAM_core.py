@@ -201,7 +201,6 @@ def hopfield_core_forward(query,                           # type: Tensor
         # No more projection necessary if "update_step" greater than 0.
         if update_step == 0:
             if not use_separate_proj_weight:
-
                 if torch.equal(query, key) and torch.equal(key, value) and not (
                         key_as_static or query_as_static or value_as_static):
                     # self-attention
@@ -733,6 +732,7 @@ class HopfieldCore(Module):
             - attn_raw: :math:``(N, num_heads, L, S)`, where N is the batch size,
               L is the target sequence length, S is the source sequence length.
         """
+
         if self.query_as_static and self.key_as_static:
             assert query.shape[2] == key.shape[2], \
                 f'query shape[2] of {query.shape[2]} and key shape[2] of {key.shape[2]} need to be equal'
@@ -759,6 +759,8 @@ class HopfieldCore(Module):
         out_weights, out_bias = None, None
         if not self.disable_out_projection:
             out_weights, out_bias = self.out_proj.weight, self.out_proj.bias
+
+
 
         if not self._qkv_same_embed_dim:
             return hopfield_core_forward(
