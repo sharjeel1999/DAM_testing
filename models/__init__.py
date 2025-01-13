@@ -1,5 +1,5 @@
 from models.classical_hopfield import Classical_HN
-from DAM import Continous_DAM
+from models.DAM import Continous_DAM
 
 def build_model(args, weights_folder, visual_folder):
     if args.model == 'classical':

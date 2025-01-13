@@ -4,7 +4,7 @@ from torch import Tensor
 import torch.optim as optim
 from typing import Optional, Tuple, Union
 
-from DAM_core import HopfieldCore
+from models.DAM_core import HopfieldCore
 from models.Hopfield_core import Hopfield_Core
 
 class Continous_DAM(Hopfield_Core):
@@ -50,7 +50,7 @@ class Continous_DAM(Hopfield_Core):
         
         super(Continous_DAM, self).__init__(args, weight_folder, visual_folder)
 
-        input_size = args.input_shape
+        input_size = args.pattern_size
         hidden_size = args.pattern_size
         pattern_size = args.pattern_size
         output_size = args.pattern_size
@@ -65,10 +65,10 @@ class Continous_DAM(Hopfield_Core):
             normalize_pattern_affine=normalize_hopfield_space_affine,
             normalize_pattern_eps=normalize_hopfield_space_eps)
         
-        self.weights = torch.zeros((self.num_neurons, self.num_neurons))
+        self.weights = nn.Parameter(torch.rand((pattern_size, pattern_size)))
         self.weights_transpose = self.weights.transpose(1, 0)
 
-        self.optimizer = optim.Adam(self.weights, 0.001)
+        self.optimizer = optim.Adam([self.weights], 0.001)
         self.loss_function = nn.HuberLoss(delta=1.0, reduction='mean')
         
     def train(self, pattern_loader):
@@ -101,6 +101,8 @@ class Continous_DAM(Hopfield_Core):
             pattern = torch.tensor(pattern, dtype=torch.float32)
             perturbed_pattern = torch.tensor(perturbed_pattern, dtype=torch.float32)
             copied_pattern = pattern.clone()
+            perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
+            print(f'Perturbed Hamming Score: {perturbed_hamming}')
 
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):

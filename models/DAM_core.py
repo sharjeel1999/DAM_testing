@@ -16,6 +16,16 @@ from typing import Optional, Tuple, Union
 # This part of the code is taken from the following GitHub repository:
 # Repository: https://github.com/ml-jku/hopfield-layers
 
+def set_shapes(query, key, value):
+    print('query, key, value shapes: ', query.shape, key.shape, value.shape)
+
+    if len(key.shape) > 1:
+        key = torch.unsqueeze(key, dim = 2)
+        query = torch.unsqueeze(query, dim = 0).repeat(key.shape[0], 1, 1)
+        value = torch.unsqueeze(value, dim = 0).repeat(key.shape[0], 1, 1)
+
+        return query, key, value
+
 def hopfield_core_forward(query,                           # type: Tensor
                           key,                             # type: Tensor
                           value,                           # type: Tensor
@@ -149,9 +159,11 @@ def hopfield_core_forward(query,                           # type: Tensor
                 p_norm_weight=p_norm_weight, p_norm_bias=p_norm_bias,
                 head_dim=head_dim, pattern_dim=pattern_dim, scaling=scaling, update_steps_max=update_steps_max,
                 update_steps_eps=update_steps_eps, return_raw_associations=return_raw_associations)
-    tgt_len, bsz, embed_dim = query.shape[0], value.shape[1], query.shape[2]
+    tgt_len, bsz, embed_dim = query.shape[0], value.shape[1], query.shape[1]
     assert embed_dim == embed_dim_to_check
     # allow MHA to have different sizes for the feature dimension
+    query, key, value = set_shapes(query, key, value)
+    print('----all shapes: ', key.shape, value.shape, key.size(), value.size())
     assert key.size(0) == value.size(0) and key.size(1) == value.size(1)
 
     assert (scaling is None) or (type(scaling) in (float, torch.Tensor))
@@ -293,7 +305,7 @@ def hopfield_core_forward(query,                           # type: Tensor
                     assert len1 == hopfield_dim and len2 == key.size(-1)
 
                     _bias = None if in_proj_bias is None else in_proj_bias[_start:_end]
-                    k = nn.functional.linear(key, k_proj_weight_non_opt, _bias)
+                    k = nn.functional.linear(key.float(), k_proj_weight_non_opt, _bias)
                     if value_as_connected:
                         v = nn.functional.linear(v, k_proj_weight_non_opt, _bias)
                     _start += hopfield_dim
@@ -378,6 +390,8 @@ def hopfield_core_forward(query,                           # type: Tensor
 
             q = q.contiguous().view(tgt_len, -1, head_dim).transpose(0, 1)
             if k is not None:
+                print('*** k shape: ', k.shape)
+                print('*** other values: ', bsz, num_heads, head_dim)
                 k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
             if v is not None:
                 v = v.contiguous().view(v.shape[0], bsz * num_heads, -1).transpose(0, 1)
@@ -734,27 +748,28 @@ class HopfieldCore(Module):
         """
 
         if self.query_as_static and self.key_as_static:
-            assert query.shape[2] == key.shape[2], \
-                f'query shape[2] of {query.shape[2]} and key shape[2] of {key.shape[2]} need to be equal'
-            head_dim, embed_dim_to_check = query.shape[2], query.shape[2]
+            assert query.shape[1] == key.shape[1], \
+                f'query shape[2] of {query.shape[1]} and key shape[2] of {key.shape[1]} need to be equal'
+            head_dim, embed_dim_to_check = query.shape[1], query.shape[1]
         else:
-            assert self.query_as_static or (query.shape[2] == self.embed_dim), \
-                f'query shape[2] of {query.shape[2]} invalid, needs to be {self.embed_dim}.'
-            assert (not self.query_as_static) or (self.query_as_static and query.shape[2] == self.head_dim), \
-                f'query shape[2] of {query.shape[2]} invalid, needs to be {self.head_dim}'
+            print('----- query shape/embed dim: ', query.shape, self.embed_dim)
+            assert self.query_as_static or (query.shape[1] == self.embed_dim), \
+                f'query shape[2] of {query.shape[1]} invalid, needs to be {self.embed_dim}.'
+            assert (not self.query_as_static) or (self.query_as_static and query.shape[1] == self.head_dim), \
+                f'query shape[2] of {query.shape[1]} invalid, needs to be {self.head_dim}'
 
-            assert self.key_as_static or (key.shape[2] == self.kdim), \
-                f'key shape[2] of {key.shape[2]} invalid, needs to be {self.kdim}.'
-            assert (not self.key_as_static) or (self.key_as_static and key.shape[2] == self.head_dim), \
-                f'key shape[2] of {key.shape[2]} invalid, needs to be {self.head_dim}'
+            assert self.key_as_static or (key.shape[1] == self.kdim), \
+                f'key shape[2] of {key.shape[1]} invalid, needs to be {self.kdim}.'
+            assert (not self.key_as_static) or (self.key_as_static and key.shape[1] == self.head_dim), \
+                f'key shape[2] of {key.shape[1]} invalid, needs to be {self.head_dim}'
             head_dim, embed_dim_to_check = self.head_dim, self.head_dim if self.query_as_static else self.embed_dim
 
-        assert self.value_as_static or (value.shape[2] == self.vdim), \
-            f'value shape[2] of {value.shape[2]} invalid, needs to be {self.vdim}.'
+        assert self.value_as_static or (value.shape[1] == self.vdim), \
+            f'value shape[2] of {value.shape[12]} invalid, needs to be {self.vdim}.'
         assert any((
-            not self.value_as_static, self.value_as_static and value.shape[2] == self.pattern_dim,
+            not self.value_as_static, self.value_as_static and value.shape[1] == self.pattern_dim,
             self.disable_out_projection)
-        ), f'value shape[2] of {value.shape[2]} invalid, needs to be {self.pattern_dim}'
+        ), f'value shape[2] of {value.shape[1]} invalid, needs to be {self.pattern_dim}'
 
         out_weights, out_bias = None, None
         if not self.disable_out_projection:

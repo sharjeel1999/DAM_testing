@@ -15,7 +15,7 @@ def create_loader(args, corrupt_flag, batch_size):
 parser = argparse.ArgumentParser(description='Network Details')
 
 # Architecture details
-parser.add_argument('--model', default = 'classical', type = str)
+parser.add_argument('--model', default = 'DAM', type = str)
 parser.add_argument('--pattern_size', default = 36, type = int)
 
 # Data details
@@ -29,8 +29,9 @@ parser.add_argument('--corrupt_type', default = 'both', type = str)
 
 args = parser.parse_args()
 
-weight_folder = 'All_saves\\classical_hopfield\\weights.pth'
-visual_folder = 'G:\\Associative_memory\\DAM_experimentation_repo\\All_saves\\classical_hopfield\\visual_saves'
+weight_folder = 'All_saves\\continous_DAM\\weights.pth'
+visual_folder = 'G:\\Associative_memory\\DAM_experimentation_repo\\All_saves\\continous_DAM\\visual_saves'
+
 model = build_model(args, weight_folder, visual_folder)
 print(model)
 
@@ -40,3 +41,4 @@ print('--- Done training ---')
 
 testing_loader = create_loader(args, corrupt_flag = True, batch_size = 1)
 model.recall(testing_loader)
+
