@@ -163,7 +163,7 @@ def hopfield_core_forward(query,                           # type: Tensor
     assert embed_dim == embed_dim_to_check
     # allow MHA to have different sizes for the feature dimension
     query, key, value = set_shapes(query, key, value)
-    print('----all shapes: ', key.shape, value.shape, key.size(), value.size())
+    print('----all shapes: ', query.shape, key.shape, value.shape, key.size(), value.size())
     assert key.size(0) == value.size(0) and key.size(1) == value.size(1)
 
     assert (scaling is None) or (type(scaling) in (float, torch.Tensor))
@@ -390,25 +390,28 @@ def hopfield_core_forward(query,                           # type: Tensor
                 assert bias_k is None
                 assert bias_v is None
 
-            # q = q.contiguous().view(tgt_len, -1, head_dim).transpose(0, 1)
-            # if k is not None:
-            #     print('*** k shape: ', k.shape)
-            #     print('*** other values: ', bsz, num_heads, head_dim)
-            #     k = k.contiguous().view(-1, bsz * num_heads, head_dim).transpose(0, 1)
-            # if v is not None:
-            #     v = v.contiguous().view(v.shape[0], bsz * num_heads, -1).transpose(0, 1)
+            q = q.contiguous().view(tgt_len, -1, head_dim).transpose(0, 1)
+            if k is not None:
+                print('*** k shape before: ', k.shape)
+                k = key.repeat(1, bsz, 1)
+                print('*** k shape: ', k.shape)
+                print('*** other values: ', bsz, num_heads, head_dim)
+                k = k.contiguous().view(-1, bsz * num_heads, head_dim)#.transpose(0, 1)
+            if v is not None:
+                v = v.contiguous().view(v.shape[0], bsz * num_heads, -1)#.transpose(0, 1)
 
-            # if static_k is not None:
-            #     assert static_k.size(0) == bsz * num_heads
-            #     assert static_k.size(2) == head_dim
-            #     k = static_k
+            if static_k is not None:
+                assert static_k.size(0) == bsz * num_heads
+                assert static_k.size(2) == head_dim
+                k = static_k
 
-            # if static_v is not None:
-            #     assert static_v.size(0) == bsz * num_heads
-            #     assert static_v.size(2) == pattern_dim
-            #     v = static_v
+            if static_v is not None:
+                assert static_v.size(0) == bsz * num_heads
+                assert static_v.size(2) == pattern_dim
+                v = static_v
 
-            # src_len = k.size(1)
+            print('*********** aaah idk: ', q.shape, k.shape, v.shape)
+            src_len = k.size(1)
 
             # if key_padding_mask is not None:
             #     assert key_padding_mask.size(0) == bsz
@@ -423,9 +426,10 @@ def hopfield_core_forward(query,                           # type: Tensor
             #     if key_padding_mask is not None:
             #         key_padding_mask = nn.functional.pad(key_padding_mask, [0, 1])
 
-        k = k.unsqueeze(2)
+        # k = k.unsqueeze(2)
         print('--- Before dot proeuct: ', q.shape, k.shape)#, k.transpose(1, 2).shape)
-        attn_output_weights = torch.bmm(q, k)#.transpose(1, 2)) ################################################################################################
+        print('--- Before dot proeuct: ', q.dtype, k.dtype)
+        attn_output_weights = torch.bmm(q.double(), k.double())#.transpose(1, 2)) ################################################################################################
         print('dot product output: ', attn_output_weights.shape)
         print('other shapes: ', bsz, num_heads, tgt_len, src_len)
         assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
@@ -483,6 +487,23 @@ def hopfield_core_forward(query,                           # type: Tensor
         return attn_output, None, xi, v
 
 
+def custom_core_forward(query,                           # type: Tensor
+                          key,                             # type: Tensor
+                          value,                           # type: Tensor
+                          ):
+    
+    batch = key.shape[0]
+    feats = key.shape[1]
+    q = query.repeat(batch, 1, 1).double()
+    v = value.repeat(batch, 1, 1).double()
+    k = key.unsqueeze(1)
+    k = k.repeat(1, feats, 1).double()
+    
+    attn_output_weights = torch.bmm(q, k)
+    print('*/*/*/*/*/*/*/ attention out shape: ', attn_output_weights.shape)
+
+    pat = attn_output_weights*v
+    return torch.sum(pat, dim = 1)
 
 
 
@@ -782,36 +803,37 @@ class HopfieldCore(Module):
             out_weights, out_bias = self.out_proj.weight, self.out_proj.bias
 
 
+        return custom_core_forward(query=query, key=key, value=value)
+    
+        # if not self._qkv_same_embed_dim:
+        #     return hopfield_core_forward(
+        #         query=query, key=key, value=value, embed_dim_to_check=embed_dim_to_check, num_heads=self.num_heads,
+        #         in_proj_weight=self.in_proj_weight, in_proj_bias=self.in_proj_bias, bias_k=self.bias_k,
+        #         bias_v=self.bias_v, add_zero_attn=self.add_zero_attn, dropout_p=self.dropout,
+        #         out_proj_weight=out_weights, out_proj_bias=out_bias, training=self.training,
+        #         key_padding_mask=key_padding_mask, need_weights=need_weights, attn_mask=attn_mask,
+        #         use_separate_proj_weight=True, q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
+        #         v_proj_weight=self.v_proj_weight,
 
-        if not self._qkv_same_embed_dim:
-            return hopfield_core_forward(
-                query=query, key=key, value=value, embed_dim_to_check=embed_dim_to_check, num_heads=self.num_heads,
-                in_proj_weight=self.in_proj_weight, in_proj_bias=self.in_proj_bias, bias_k=self.bias_k,
-                bias_v=self.bias_v, add_zero_attn=self.add_zero_attn, dropout_p=self.dropout,
-                out_proj_weight=out_weights, out_proj_bias=out_bias, training=self.training,
-                key_padding_mask=key_padding_mask, need_weights=need_weights, attn_mask=attn_mask,
-                use_separate_proj_weight=True, q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
-                v_proj_weight=self.v_proj_weight,
+        #         key_as_static=self.key_as_static, query_as_static=self.query_as_static,
+        #         value_as_static=self.value_as_static, value_as_connected=self.value_as_connected,
+        #         normalize_pattern=self.normalize_pattern, normalize_pattern_eps=self.normalize_pattern_eps,
+        #         p_norm_weight=self.p_norm_weight, p_norm_bias=self.p_norm_bias,
+        #         head_dim=head_dim, pattern_dim=self.pattern_dim, scaling=scaling,
+        #         update_steps_max=update_steps_max, update_steps_eps=update_steps_eps,
+        #         return_raw_associations=return_raw_associations, return_projected_patterns=return_pattern_projections)
+        # else:
+        #     return hopfield_core_forward(
+        #         query=query, key=key, value=value, embed_dim_to_check=embed_dim_to_check, num_heads=self.num_heads,
+        #         in_proj_weight=self.in_proj_weight, in_proj_bias=self.in_proj_bias, bias_k=self.bias_k,
+        #         bias_v=self.bias_v, add_zero_attn=self.add_zero_attn, dropout_p=self.dropout,
+        #         out_proj_weight=out_weights, out_proj_bias=out_bias, training=self.training,
+        #         key_padding_mask=key_padding_mask, need_weights=need_weights, attn_mask=attn_mask,
 
-                key_as_static=self.key_as_static, query_as_static=self.query_as_static,
-                value_as_static=self.value_as_static, value_as_connected=self.value_as_connected,
-                normalize_pattern=self.normalize_pattern, normalize_pattern_eps=self.normalize_pattern_eps,
-                p_norm_weight=self.p_norm_weight, p_norm_bias=self.p_norm_bias,
-                head_dim=head_dim, pattern_dim=self.pattern_dim, scaling=scaling,
-                update_steps_max=update_steps_max, update_steps_eps=update_steps_eps,
-                return_raw_associations=return_raw_associations, return_projected_patterns=return_pattern_projections)
-        else:
-            return hopfield_core_forward(
-                query=query, key=key, value=value, embed_dim_to_check=embed_dim_to_check, num_heads=self.num_heads,
-                in_proj_weight=self.in_proj_weight, in_proj_bias=self.in_proj_bias, bias_k=self.bias_k,
-                bias_v=self.bias_v, add_zero_attn=self.add_zero_attn, dropout_p=self.dropout,
-                out_proj_weight=out_weights, out_proj_bias=out_bias, training=self.training,
-                key_padding_mask=key_padding_mask, need_weights=need_weights, attn_mask=attn_mask,
-
-                key_as_static=self.key_as_static, query_as_static=self.query_as_static,
-                value_as_static=self.value_as_static, value_as_connected=self.value_as_connected,
-                normalize_pattern=self.normalize_pattern, normalize_pattern_eps=self.normalize_pattern_eps,
-                p_norm_weight=self.p_norm_weight, p_norm_bias=self.p_norm_bias,
-                head_dim=head_dim, pattern_dim=self.pattern_dim, scaling=scaling,
-                update_steps_max=update_steps_max, update_steps_eps=update_steps_eps,
-                return_raw_associations=return_raw_associations, return_projected_patterns=return_pattern_projections)
+        #         key_as_static=self.key_as_static, query_as_static=self.query_as_static,
+        #         value_as_static=self.value_as_static, value_as_connected=self.value_as_connected,
+        #         normalize_pattern=self.normalize_pattern, normalize_pattern_eps=self.normalize_pattern_eps,
+        #         p_norm_weight=self.p_norm_weight, p_norm_bias=self.p_norm_bias,
+        #         head_dim=head_dim, pattern_dim=self.pattern_dim, scaling=scaling,
+        #         update_steps_max=update_steps_max, update_steps_eps=update_steps_eps,
+        #         return_raw_associations=return_raw_associations, return_projected_patterns=return_pattern_projections)

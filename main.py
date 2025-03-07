@@ -30,7 +30,7 @@ parser.add_argument('--corrupt_type', default = 'both', type = str)
 args = parser.parse_args()
 
 weight_folder = 'All_saves\\continous_DAM\\weights.pth'
-visual_folder = 'G:\\Associative_memory\\DAM_experimentation_repo\\All_saves\\continous_DAM\\visual_saves'
+visual_folder = 'O:\\PCodes\\Associative_memory\\DAM_experimentation_repo\\All_saves\\continous_DAM\\visual_saves'
 
 model = build_model(args, weight_folder, visual_folder)
 print(model)

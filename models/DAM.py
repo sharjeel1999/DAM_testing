@@ -76,8 +76,9 @@ class Continous_DAM(Hopfield_Core):
 
         for pattern_dict in pattern_loader:
             pattern = torch.squeeze(pattern_dict['image'])
+            print('===== Raw q/k/v inpu shapes:', self.weights_transpose.shape, pattern.shape, self.weights.shape)
             associated_output = self.association_core(query = self.weights_transpose, key = pattern, value = self.weights)
-
+            print('associated shape: ', associated_output.shape)
             loss = self.loss_function(associated_output, pattern)
 
             self.optimizer.zero_grad()
@@ -106,8 +107,9 @@ class Continous_DAM(Hopfield_Core):
 
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):
+                perturbed_pattern = perturbed_pattern.unsqueeze(dim = 0)
                 perturbed_pattern = self.association_core(query = weights_transpose, key = perturbed_pattern, value = self.weights)
-
+                perturbed_pattern = torch.squeeze(perturbed_pattern)
                 hamming = self.calculate_similarity(perturbed_pattern, pattern)
                 print(f'Step: {s}, Hamming Score: {hamming}')
 
