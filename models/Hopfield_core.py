@@ -15,10 +15,10 @@ class Hopfield_Core():
         return hamming_score(generated, original)
     
     def save_weights(self):
-        torch.save(self.weights, os.path.join(os.getcwd(), self.weight_folder))
+        torch.save(self.parameters, os.path.join(os.getcwd(), self.weight_folder))
 
     def load_weights(self):
-        self.weights = torch.load(os.path.join(os.getcwd(), self.weight_folder))
+        self.parameters = torch.load(os.path.join(os.getcwd(), self.weight_folder))
 
     def save_files(self, pattern, perturbed, i):
         pattern = pattern.detach().cpu().numpy()

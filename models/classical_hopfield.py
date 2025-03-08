@@ -15,7 +15,7 @@ class Classical_HN(Hopfield_Core):
         self.weight_folder = weight_folder
         self.visual_folder = visual_folder
 
-        self.weights = torch.zeros((self.num_neurons, self.num_neurons))
+        self.parameters = torch.zeros((self.num_neurons, self.num_neurons))
 
     def train(self, pattern_loader):
         for pattern_dict in pattern_loader:
@@ -24,11 +24,11 @@ class Classical_HN(Hopfield_Core):
             pattern = torch.tensor(pattern, dtype = torch.float32)
             # print('input pattern shape: ', pattern.shape)
             pattern_T = torch.transpose(pattern, 0, 1)
-            self.weights += torch.matmul(pattern_T, pattern) #torch.outer(pattern, pattern)
+            self.parameters += torch.matmul(pattern_T, pattern) #torch.outer(pattern, pattern)
 
         # Remove self-connections
         for i in range(self.num_neurons):
-            self.weights[i, i] = 0
+            self.parameters[i, i] = 0
 
         self.save_weights()
 
@@ -48,7 +48,7 @@ class Classical_HN(Hopfield_Core):
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):
                 for i in range(self.num_neurons):
-                    weighted_sum = torch.matmul(self.weights[i], perturbed_pattern)
+                    weighted_sum = torch.matmul(self.parameters[i], perturbed_pattern)
                     perturbed_pattern[i] = 1.0 if weighted_sum >= 0 else -1.0
                 hamming = self.calculate_similarity(perturbed_pattern, pattern)
                 print(f'Step: {s}, Hamming Score: {hamming}')

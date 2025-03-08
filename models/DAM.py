@@ -7,6 +7,9 @@ from typing import Optional, Tuple, Union
 
 from models.DAM_core import HopfieldCore
 from models.Hopfield_core import Hopfield_Core
+from utils import perturb_pattern, Thresh
+
+import matplotlib.pyplot as plt
 
 class Continous_DAM(Hopfield_Core):
     def __init__(self,
@@ -55,7 +58,8 @@ class Continous_DAM(Hopfield_Core):
         # input_size = args.pattern_size
         # hidden_size = args.pattern_size
         self.pattern_size = args.pattern_size
-        self.mem_size = args.mem_size
+        self.mem_size = 128 #args.mem_size
+        self.mem_dim = 256
 
         # self.association_core = HopfieldCore(
         #     embed_dim=input_size, num_heads=num_heads, dropout=dropout, bias=input_bias,
@@ -67,52 +71,73 @@ class Continous_DAM(Hopfield_Core):
         #     normalize_pattern_affine=normalize_hopfield_space_affine,
         #     normalize_pattern_eps=normalize_hopfield_space_eps)
         
-        self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_size)))
+        self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
         # self.weights_transpose = self.weights.transpose(1, 0)
 
-        self.query_proj = nn.Linear(self.pattern_size, self.mem_size)
-        self.key_proj = nn.Linear(self.pattern_size, self.mem_size)
-        self.value_proj = nn.Linear(self.pattern_size, self.mem_size)
-        self.output_proj = nn.Linear(self.mem_size, self.pattern_size)
+        self.query_proj = nn.Linear(self.pattern_size, self.mem_dim)
+        self.key_proj = nn.Linear(self.mem_dim, self.mem_dim)
+        self.value_proj = nn.Linear(self.mem_dim, self.mem_dim)
+        self.output_proj = nn.Linear(self.mem_dim, self.pattern_size)
 
+        self.beta = 8
+        self.parameters = [self.weights, 
+                        self.query_proj.weight, self.query_proj.bias,
+                        self.key_proj.weight, self.key_proj.bias,
+                        self.value_proj.weight, self.value_proj.bias,
+                        self.output_proj.weight, self.output_proj.bias]
+        
+        # self.optimizer = optim.Adam([self.weights, 
+        #                              self.query_proj.weight, self.query_proj.bias,
+        #                              self.key_proj.weight, self.key_proj.bias,
+        #                              self.value_proj.weight, self.value_proj.bias,
+        #                              self.output_proj.weight, self.output_proj.bias], 0.001)
 
-        self.optimizer = optim.Adam([self.weights], 0.001)
-        self.loss_function = nn.HuberLoss(delta=1.0, reduction='mean')
+        self.optimizer = optim.Adam(self.parameters, 0.001)
+        self.loss_function = nn.MSELoss() #nn.HuberLoss(delta=1.0, reduction='mean')
         
     def association_forward(self, pattern):
-        print('--- pattern data type:' , pattern.dtype)
+        # print('--- pattern data type:' , pattern.shape)
+        # print('--- weights shape: ', self.weights.shape)
         q = self.query_proj(pattern)
         k = self.key_proj(self.weights)
         v = self.value_proj(self.weights)
+        # print('q/k/v shapes: ', q.shape, k.shape, v.shape)
 
-        attn_weights = F.softmax(torch.matmul(q, k.t()) / (self.mem_size ** 0.5), dim = -1)
+        attn_weights = F.softmax(torch.matmul(q, k.t()) / (self.mem_dim ** 0.5), dim = 1)
+        # print('--- attn shape: ', attn_weights.shape)
         attn_output = torch.matmul(attn_weights, v)
+        # print('--- matmul shape:', attn_output.shape)
 
         output = self.output_proj(attn_output)
+        # print('--- final output shape: ', output.shape)
         return output
 
     def train(self, pattern_loader):
         print('implement train')
 
-        for pattern_dict in pattern_loader:
-            pattern = torch.squeeze(pattern_dict['image']).float()
-            # print('===== Raw q/k/v inpu shapes:', pattern.shape, self.weights.shape)
-            # associated_output = self.association_core(query = self.weights_transpose, key = pattern, value = self.weights)
-            associated_output = self.association_forward(pattern)
-            # print('associated shape: ', associated_output.shape)
-            loss = self.loss_function(associated_output, pattern)
+        for e in range(100):
+            for pattern_dict in pattern_loader:
+                pattern = torch.squeeze(pattern_dict['image']).float()
+                perturbed_pattern = perturb_pattern(pattern, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+                # print('===== Raw q/k/v inpu shapes:', pattern.shape, self.weights.shape)
+                # associated_output = self.association_core(query = self.weights_transpose, key = pattern, value = self.weights)
+                associated_output = self.association_forward(perturbed_pattern)
+                # print('associated shape: ', associated_output.shape)
+                loss = self.loss_function(associated_output, pattern)
+                hamming = self.calculate_similarity(perturbed_pattern, pattern)
+                print('=== loss: ', loss, ' ', hamming)
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
 
         self.save_weights()
 
     def recall(self, pattern_loader, steps=5):
         print('implement recall')
 
-        self.load_weights()
-        weights_transpose = self.weights.transpose(1, 0)
+        # self.load_weights()
+        # weights_transpose = self.weights.transpose(1, 0)
 
         for m, pattern_dict in enumerate(pattern_loader):
             print('index: ', m)
@@ -120,18 +145,23 @@ class Continous_DAM(Hopfield_Core):
             perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
             print('Pattern shapes: ', pattern.shape, perturbed_pattern.shape)
         
-            pattern = torch.tensor(pattern, dtype=torch.float32)
-            perturbed_pattern = torch.tensor(perturbed_pattern, dtype=torch.float32)
-            copied_pattern = pattern.clone()
+            # pattern = torch.tensor(pattern, dtype=torch.float32)
+            # perturbed_pattern = torch.tensor(perturbed_pattern, dtype=torch.float32)
+            # copied_pattern = pattern.clone()
             perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
             print(f'Perturbed Hamming Score: {perturbed_hamming}')
 
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):
+                print('perturbed pattern uniques: ', perturbed_pattern.shape)
+                zz = perturbed_pattern.reshape(self.args.input_shape, self.args.input_shape)
+                plt.imshow(zz.detach().numpy())
+                plt.show()
                 perturbed_pattern = perturbed_pattern.unsqueeze(dim = 0)
                 # perturbed_pattern = self.association_core(query = weights_transpose, key = perturbed_pattern, value = self.weights)
                 perturbed_pattern = self.association_forward(perturbed_pattern)
                 perturbed_pattern = torch.squeeze(perturbed_pattern)
+                print('before hamming unique: ', torch.unique(perturbed_pattern))
                 hamming = self.calculate_similarity(perturbed_pattern, pattern)
                 print(f'Step: {s}, Hamming Score: {hamming}')
 

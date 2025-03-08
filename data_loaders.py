@@ -38,7 +38,7 @@ class Image_dataset(Dataset):
         inputs = {}
         if self.corrupt_flag == True:
             image = self.image_array[index]
-            print('input image shape: ', image.shape)
+            # print('input image shape: ', image.shape)
             image = Thresh(np.array([image.flatten()-0.5]))
             perturbed_image = perturb_pattern(image, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
