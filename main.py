@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description='Network Details')
 # Architecture details
 parser.add_argument('--model', default = 'DAM', type = str)
 parser.add_argument('--pattern_size', default = 36, type = int)
+parser.add_argument('--mem_size', default = 36, type = int)
 
 # Data details
 parser.add_argument('--folder_path', default = 'test_images', type = str)

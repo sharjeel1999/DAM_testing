@@ -494,12 +494,15 @@ def custom_core_forward(query,                           # type: Tensor
     
     batch = key.shape[0]
     feats = key.shape[1]
+    print('initial shapes: ', query.shape, key.shape, value.shape)
     q = query.repeat(batch, 1, 1).double()
     v = value.repeat(batch, 1, 1).double()
     k = key.unsqueeze(1)
     k = k.repeat(1, feats, 1).double()
+    print('reshaped shapes: ', q.shape, k.shape, v.shape)
     
     attn_output_weights = torch.bmm(q, k)
+    attn_output_weights = nn.functional.softmax(attn_output_weights, dim=1)
     print('*/*/*/*/*/*/*/ attention out shape: ', attn_output_weights.shape)
 
     pat = attn_output_weights*v
