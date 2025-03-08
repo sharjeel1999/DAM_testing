@@ -26,8 +26,9 @@ class Hopfield_Core():
         pattern = pattern.reshape(self.args.input_shape, self.args.input_shape)
         perturbed = perturbed.reshape(self.args.input_shape, self.args.input_shape)
 
-        pattern = np.where(pattern == 1, 100, 0)
-        perturbed = np.where(perturbed == 1, 100, 0)
+        if self.args.save_files == 'binary':
+            pattern = np.where(pattern < 0, 0, 100)
+            perturbed = np.where(perturbed < 0, 0, 100)
         print('uniques: ', np.unique(pattern), np.unique(perturbed))
 
         name_original = str(i) + '_Original.png'

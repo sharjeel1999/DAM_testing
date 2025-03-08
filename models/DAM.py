@@ -136,7 +136,7 @@ class Continous_DAM(Hopfield_Core):
     def recall(self, pattern_loader, steps=5):
         print('implement recall')
 
-        # self.load_weights()
+        self.load_weights()
         # weights_transpose = self.weights.transpose(1, 0)
 
         for m, pattern_dict in enumerate(pattern_loader):
@@ -154,14 +154,14 @@ class Continous_DAM(Hopfield_Core):
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):
                 print('perturbed pattern uniques: ', perturbed_pattern.shape)
-                zz = perturbed_pattern.reshape(self.args.input_shape, self.args.input_shape)
-                plt.imshow(zz.detach().numpy())
-                plt.show()
+                # zz = perturbed_pattern.reshape(self.args.input_shape, self.args.input_shape)
+                # plt.imshow(zz.detach().numpy())
+                # plt.show()
                 perturbed_pattern = perturbed_pattern.unsqueeze(dim = 0)
                 # perturbed_pattern = self.association_core(query = weights_transpose, key = perturbed_pattern, value = self.weights)
                 perturbed_pattern = self.association_forward(perturbed_pattern)
                 perturbed_pattern = torch.squeeze(perturbed_pattern)
-                print('before hamming unique: ', torch.unique(perturbed_pattern))
+                
                 hamming = self.calculate_similarity(perturbed_pattern, pattern)
                 print(f'Step: {s}, Hamming Score: {hamming}')
 
