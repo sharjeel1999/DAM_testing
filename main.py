@@ -14,10 +14,11 @@ def create_loader(args, corrupt_flag, batch_size):
 
 parser = argparse.ArgumentParser(description='Network Details')
 
-# Architecture details
+
+# General details
 parser.add_argument('--model', default = 'DAM', type = str)
 parser.add_argument('--pattern_size', default = 36, type = int)
-parser.add_argument('--mem_size', default = 36, type = int)
+parser.add_argument('--training_epochs', default = 100, type = int)
 
 # Data details
 parser.add_argument('--folder_path', default = 'test_images', type = str)
@@ -31,6 +32,10 @@ parser.add_argument('--crop_percent', default = 0.3, type = float)
 parser.add_argument('--corrupt_type', default = 'both', type = str)
 parser.add_argument('--evaluation_metric', default='hamming')
 parser.add_argument('--save_files', default='binary')
+
+# Continous Hopfield
+parser.add_argument('--mem_size', default = 64, type = int)
+parser.add_argument('--mem_dim', default = 64, type = int)
 
 args = parser.parse_args()
 
