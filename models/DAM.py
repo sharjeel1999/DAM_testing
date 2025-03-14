@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 import torch.optim as optim
-from typing import Optional, Tuple, Union
 
 from models.Hopfield_core import Hopfield_Core
 from utils import perturb_pattern, Thresh
