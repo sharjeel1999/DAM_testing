@@ -5,7 +5,6 @@ from torch import Tensor
 import torch.optim as optim
 from typing import Optional, Tuple, Union
 
-from models.DAM_core import HopfieldCore
 from models.Hopfield_core import Hopfield_Core
 from utils import perturb_pattern, Thresh
 
@@ -41,15 +40,18 @@ class Continous_DAM(Hopfield_Core):
         
 
         self.optimizer = optim.Adam(self.parameters, 0.001)
-        self.loss_function = nn.MSELoss() # nn.HuberLoss(delta=1.0, reduction='mean')
+        self.loss_function = nn.MSELoss() #nn.HuberLoss(delta=1.0, reduction='mean')
         
     def association_forward(self, pattern):
         q = self.query_proj(pattern)
         k = self.key_proj(self.weights)
         v = self.value_proj(self.weights)
 
+        print('only matmul shapes: ', torch.matmul(q, k.t()).shape)
         attn_weights = F.softmax(self.beta*torch.matmul(q, k.t()) / (self.mem_dim ** 0.5), dim = 1)
+        print('attn weights shape: ', attn_weights.shape)
         attn_output = torch.matmul(attn_weights, v)
+        print('matmul output: ', attn_output.shape)
 
         output = self.output_proj(attn_output)
         return output
