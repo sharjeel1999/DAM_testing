@@ -69,7 +69,7 @@ class Continous_DAM(Hopfield_Core):
                 associated_output = self.association_forward(perturbed_pattern.to(self.args.device))
                 
                 loss = self.loss_function(associated_output, pattern.to(self.args.device))
-                hamming = self.calculate_similarity(perturbed_pattern, pattern)
+                # sim_score = self.calculate_similarity(perturbed_pattern, pattern)
                 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -86,12 +86,6 @@ class Continous_DAM(Hopfield_Core):
             print('index: ', m)
             pattern = torch.squeeze(pattern_dict['image']).float()
             perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
-            p = np.resize(pattern.numpy(), (64, 64))
-            pp = np.resize(perturbed_pattern.numpy(), (64, 64))
-            plt.imshow(p)
-            plt.show()
-            plt.imshow(pp)
-            plt.show()
         
             perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
             print(f'Perturbed Hamming Score: {perturbed_hamming}')
@@ -102,8 +96,13 @@ class Continous_DAM(Hopfield_Core):
                 perturbed_pattern = self.association_forward(perturbed_pattern.to(self.args.device))
                 perturbed_pattern = torch.squeeze(perturbed_pattern)
                 
-                hamming = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy(), pattern)
-                print(f'Step: {s}, Hamming Score: {hamming}')
+                sim_score = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy(), pattern)
+                if self.args.pattern_type == 'binary':
+                    print(f"Step: {s}, Hamming Score: {sim_score['hamming']}")
+                else:
+                    print(f"Step: {s}, MSE: {sim_score['MSE']} (Lower Better)")
+                    print(f"Step: {s}, PSNR: {sim_score['PSNR']} (Higher Better)")
+                    print(f"Step: {s}, SSIM: {sim_score['SSIM']} (Higher Better)")
 
             self.save_files(pattern, perturbed_pattern, m)
 

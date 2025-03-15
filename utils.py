@@ -1,7 +1,59 @@
 import torch
+import torch.nn.functional as F
 
 import numpy as np
 import copy
+
+def gaussian_kernel(window_size, sigma=1.5):
+        coords = torch.arange(window_size).float() - window_size // 2
+        g = torch.exp(-(coords ** 2) / (2 * sigma ** 2))
+        g = g / g.sum()  # Normalize
+        kernel = g.unsqueeze(0) * g.unsqueeze(1)  # Outer product to form 2D Gaussian kernel
+        return kernel
+
+def PSNR(img1, img2, max_pixel_value=1.0):
+    mse = torch.mean((img1 - img2) ** 2)  # Mean Squared Error
+    if mse == 0:  # Avoid division by zero
+        return float('inf')
+    psnr = 10 * torch.log10(max_pixel_value ** 2 / mse)
+    return psnr.item()
+
+def SSIM(img1, img2, in_shape, window_size = 11, size_average = True, max_pixel_value = 1.0):
+    img1 = torch.reshape(img1, (in_shape, in_shape))
+    img2 = torch.reshape(img2, (in_shape, in_shape))
+
+    kernel = gaussian_kernel(window_size).to(img1.device)
+    kernel = kernel.unsqueeze(0).unsqueeze(0)  # Shape: (1, 1, window_size, window_size)
+    
+    # Padding
+    padding = window_size // 2
+    img1 = F.pad(img1.unsqueeze(0).unsqueeze(0), (padding, padding, padding, padding), mode='reflect')
+    img2 = F.pad(img2.unsqueeze(0).unsqueeze(0), (padding, padding, padding, padding), mode='reflect')
+    
+    # Mean
+    mu1 = F.conv2d(img1, kernel)
+    mu2 = F.conv2d(img2, kernel)
+    
+    # Squares of means
+    mu1_sq = mu1 ** 2
+    mu2_sq = mu2 ** 2
+    mu1_mu2 = mu1 * mu2
+    
+    # Variances and covariances
+    sigma1_sq = F.conv2d(img1 ** 2, kernel) - mu1_sq
+    sigma2_sq = F.conv2d(img2 ** 2, kernel) - mu2_sq
+    sigma12 = F.conv2d(img1 * img2, kernel) - mu1_mu2
+    
+    # SSIM constants
+    C1 = (0.01 * max_pixel_value) ** 2
+    C2 = (0.03 * max_pixel_value) ** 2
+    
+    # Compute SSIM map
+    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) * (sigma1_sq + sigma2_sq + C2))
+    
+    # Return the mean SSIM value
+    return ssim_map.mean().item()
+
 
 def hamming_score(vector1, vector2):
     assert len(vector1) == len(vector2), "Vectors must be of the same length"

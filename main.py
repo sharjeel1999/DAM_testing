@@ -32,7 +32,7 @@ parser.add_argument('--pattern_type', default = 'continous')
 parser.add_argument('--perturb_percent', default = 0.2, type = float)
 parser.add_argument('--crop_percent', default = 0.3, type = float)
 parser.add_argument('--corrupt_type', default = 'both', type = str)
-parser.add_argument('--evaluation_metric', default='hamming')
+parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
 
 # Continous Hopfield
@@ -41,8 +41,8 @@ parser.add_argument('--mem_dim', default = 4096, type = int)
 
 args = parser.parse_args()
 
-weight_folder = 'All_saves\\continous_DAM\\weights.pth'
-visual_folder = 'O:\\PCodes\\Associative_memory\\DAM_experimentation_repo\\All_saves\\continous_DAM\\visual_saves'
+weight_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\weights.pth'
+visual_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\visual_saves'
 
 model = build_model(args, weight_folder, visual_folder).to(args.device)
 print(model)
