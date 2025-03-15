@@ -1,12 +1,16 @@
 import torch
+import torch.nn as nn
+
 import cv2
 import os
 import numpy as np
 
 from utils import hamming_score
 
-class Hopfield_Core():
+class Hopfield_Core(nn.Module):
     def __init__(self, args, weight_folder, visual_folder):
+        super(Hopfield_Core, self).__init__()
+
         self.args = args
         self.weight_folder = weight_folder
         self.visual_folder = visual_folder
@@ -26,7 +30,7 @@ class Hopfield_Core():
         pattern = pattern.reshape(self.args.input_shape, self.args.input_shape)
         perturbed = perturbed.reshape(self.args.input_shape, self.args.input_shape)
 
-        if self.args.save_files == 'binary':
+        if self.args.pattern_type == 'binary':
             pattern = np.where(pattern < 0, 0, 100)
             perturbed = np.where(perturbed < 0, 0, 100)
         print('uniques: ', np.unique(pattern), np.unique(perturbed))

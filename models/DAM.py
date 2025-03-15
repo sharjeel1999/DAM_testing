@@ -8,6 +8,7 @@ from models.Hopfield_core import Hopfield_Core
 from utils import perturb_pattern, Thresh
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 class Continous_DAM(Hopfield_Core):
     def __init__(self,
@@ -18,6 +19,7 @@ class Continous_DAM(Hopfield_Core):
         
         super(Continous_DAM, self).__init__(args, weight_folder, visual_folder)
 
+        self.args = args
         self.training_epochs = args.training_epochs
         self.pattern_size = args.pattern_size
         self.mem_size = args.mem_size
@@ -46,11 +48,11 @@ class Continous_DAM(Hopfield_Core):
         k = self.key_proj(self.weights)
         v = self.value_proj(self.weights)
 
-        print('only matmul shapes: ', torch.matmul(q, k.t()).shape)
+        # print('only matmul shapes: ', torch.matmul(q, k.t()).shape)
         attn_weights = F.softmax(self.beta*torch.matmul(q, k.t()) / (self.mem_dim ** 0.5), dim = 1)
-        print('attn weights shape: ', attn_weights.shape)
+        # print('attn weights shape: ', attn_weights.shape)
         attn_output = torch.matmul(attn_weights, v)
-        print('matmul output: ', attn_output.shape)
+        # print('matmul output: ', attn_output.shape)
 
         output = self.output_proj(attn_output)
         return output
@@ -64,9 +66,9 @@ class Continous_DAM(Hopfield_Core):
                 pattern = torch.squeeze(pattern_dict['image']).float()
                 perturbed_pattern = perturb_pattern(pattern, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
-                associated_output = self.association_forward(perturbed_pattern)
+                associated_output = self.association_forward(perturbed_pattern.to(self.args.device))
                 
-                loss = self.loss_function(associated_output, pattern)
+                loss = self.loss_function(associated_output, pattern.to(self.args.device))
                 hamming = self.calculate_similarity(perturbed_pattern, pattern)
                 
                 self.optimizer.zero_grad()
@@ -84,6 +86,12 @@ class Continous_DAM(Hopfield_Core):
             print('index: ', m)
             pattern = torch.squeeze(pattern_dict['image']).float()
             perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
+            p = np.resize(pattern.numpy(), (64, 64))
+            pp = np.resize(perturbed_pattern.numpy(), (64, 64))
+            plt.imshow(p)
+            plt.show()
+            plt.imshow(pp)
+            plt.show()
         
             perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
             print(f'Perturbed Hamming Score: {perturbed_hamming}')
@@ -91,10 +99,10 @@ class Continous_DAM(Hopfield_Core):
             print(f'Recovering pattern for {steps} steps.')
             for s in range(steps):
                 perturbed_pattern = perturbed_pattern.unsqueeze(dim = 0)
-                perturbed_pattern = self.association_forward(perturbed_pattern)
+                perturbed_pattern = self.association_forward(perturbed_pattern.to(self.args.device))
                 perturbed_pattern = torch.squeeze(perturbed_pattern)
                 
-                hamming = self.calculate_similarity(perturbed_pattern, pattern)
+                hamming = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy(), pattern)
                 print(f'Step: {s}, Hamming Score: {hamming}')
 
             self.save_files(pattern, perturbed_pattern, m)
