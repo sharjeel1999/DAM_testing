@@ -56,7 +56,7 @@ class Image_dataset(Dataset):
             else:
                 image = np.array([image.flatten()])
 
-            perturbed_image = perturb_pattern(image, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
+            perturbed_image = perturb_pattern(image.copy(), self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
             
             inputs['image'] = image
             inputs['perturbed'] = perturbed_image

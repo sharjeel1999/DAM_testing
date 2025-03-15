@@ -34,11 +34,13 @@ class Hopfield_Core(nn.Module):
     def load_weights(self):
         self.parameters = torch.load(os.path.join(os.getcwd(), self.weight_folder))
 
-    def save_files(self, pattern, perturbed, i):
+    def save_files(self, pattern, perturbed, p_in, i):
         pattern = pattern.detach().cpu().numpy()
         perturbed = perturbed.detach().cpu().numpy()
+        p_in = p_in.detach().cpu().numpy()
         pattern = pattern.reshape(self.args.input_shape, self.args.input_shape)
         perturbed = perturbed.reshape(self.args.input_shape, self.args.input_shape)
+        p_in = p_in.reshape(self.args.input_shape, self.args.input_shape)
 
         if self.args.pattern_type == 'binary':
             pattern = np.where(pattern < 0, 0, 100)
@@ -47,7 +49,9 @@ class Hopfield_Core(nn.Module):
 
         name_original = str(i) + '_Original.png'
         name_recovered = str(i) + '_Recovered.png'
+        name_input = str(i) + '_Input.png'
         cv2.imwrite(os.path.join(self.visual_folder, name_original), pattern)
         cv2.imwrite(os.path.join(self.visual_folder, name_recovered), perturbed)
+        cv2.imwrite(os.path.join(self.visual_folder, name_input), p_in)
 
     

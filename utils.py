@@ -143,7 +143,11 @@ def perturb_pattern(image, perturb_percentage, crop_percentage, corrupt_type):
         return perturbed_image
     
     if corrupt_type == 'perturb':
-        raise NotImplementedError("Perturb only is not implemented.")
+        perturbed_image = Perturb(image, p = perturb_percentage)
+        return perturbed_image
     
     if corrupt_type == 'crop':
-        raise NotImplementedError("Crop only is not implemented.")
+        k = 1 - crop_percentage
+        kk = int(x*k)
+        image[:, kk:] = 0
+        return image

@@ -64,7 +64,7 @@ class Continous_DAM(Hopfield_Core):
         for e in range(self.training_epochs):
             for pattern_dict in pattern_loader:
                 pattern = torch.squeeze(pattern_dict['image']).float()
-                perturbed_pattern = perturb_pattern(pattern, self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
+                perturbed_pattern = perturb_pattern(pattern.clone(), self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
                 associated_output = self.association_forward(perturbed_pattern.to(self.args.device))
                 
@@ -86,6 +86,7 @@ class Continous_DAM(Hopfield_Core):
             print('index: ', m)
             pattern = torch.squeeze(pattern_dict['image']).float()
             perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
+            p_in = perturbed_pattern.clone()
         
             perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
             print(f'Perturbed Hamming Score: {perturbed_hamming}')
@@ -104,5 +105,5 @@ class Continous_DAM(Hopfield_Core):
                     print(f"Step: {s}, PSNR: {sim_score['PSNR']} (Higher Better)")
                     print(f"Step: {s}, SSIM: {sim_score['SSIM']} (Higher Better)")
 
-            self.save_files(pattern, perturbed_pattern, m)
+            self.save_files(pattern, perturbed_pattern, p_in, m)
 
