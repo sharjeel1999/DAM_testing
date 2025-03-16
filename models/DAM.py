@@ -5,7 +5,7 @@ from torch import Tensor
 import torch.optim as optim
 
 from models.Hopfield_core import Hopfield_Core
-from utils import perturb_pattern, Thresh
+from utils import perturb_pattern, Thresh, Combined_loss
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,32 +27,36 @@ class Continous_DAM(Hopfield_Core):
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
 
-        self.query_proj = nn.Linear(self.pattern_size, self.mem_dim)
-        self.key_proj = nn.Linear(self.mem_dim, self.mem_dim)
-        self.value_proj = nn.Linear(self.mem_dim, self.mem_dim)
-        self.output_proj = nn.Linear(self.mem_dim, self.pattern_size)
+        self.query_proj = nn.Linear(self.pattern_size, self.mem_dim, bias = False)
+        self.key_proj = nn.Linear(self.mem_dim, self.mem_dim, bias = False)
+        self.value_proj = nn.Linear(self.mem_dim, self.mem_dim, bias = False)
+        self.output_proj = nn.Linear(self.mem_dim, self.pattern_size, bias = False)
+
+        # nn.init.normal_(self.weights, mean=0.0, std=0.02)
 
         self.beta = 8
-        self.parameters = [self.weights, 
-                        self.query_proj.weight, self.query_proj.bias,
-                        self.key_proj.weight, self.key_proj.bias,
-                        self.value_proj.weight, self.value_proj.bias,
-                        self.output_proj.weight, self.output_proj.bias]
+        # self.parameters = [self.weights, 
+        #                 self.query_proj.weight, self.query_proj.bias,
+        #                 self.key_proj.weight, self.key_proj.bias,
+        #                 self.value_proj.weight, self.value_proj.bias,
+        #                 self.output_proj.weight, self.output_proj.bias]
         
+        self.parameters = [self.weights, 
+                        self.query_proj.weight,
+                        self.key_proj.weight,
+                        self.value_proj.weight,
+                        self.output_proj.weight,]
 
         self.optimizer = optim.Adam(self.parameters, 0.001)
-        self.loss_function = nn.MSELoss() #nn.HuberLoss(delta=1.0, reduction='mean')
+        self.loss_function = nn.MSELoss()
         
     def association_forward(self, pattern):
         q = self.query_proj(pattern)
         k = self.key_proj(self.weights)
         v = self.value_proj(self.weights)
 
-        # print('only matmul shapes: ', torch.matmul(q, k.t()).shape)
         attn_weights = F.softmax(self.beta*torch.matmul(q, k.t()) / (self.mem_dim ** 0.5), dim = 1)
-        # print('attn weights shape: ', attn_weights.shape)
         attn_output = torch.matmul(attn_weights, v)
-        # print('matmul output: ', attn_output.shape)
 
         output = self.output_proj(attn_output)
         return output
@@ -67,9 +71,9 @@ class Continous_DAM(Hopfield_Core):
                 perturbed_pattern = perturb_pattern(pattern.clone(), self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
                 associated_output = self.association_forward(perturbed_pattern.to(self.args.device))
-                
+                # print('pattern/associated shapes: ', pattern.shape, associated_output.shape)
                 loss = self.loss_function(associated_output, pattern.to(self.args.device))
-                # sim_score = self.calculate_similarity(perturbed_pattern, pattern)
+                # loss = Combined_loss(associated_output, pattern.to(self.args.device))
                 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -87,6 +91,12 @@ class Continous_DAM(Hopfield_Core):
             pattern = torch.squeeze(pattern_dict['image']).float()
             perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
             p_in = perturbed_pattern.clone()
+            # p = torch.reshape(pattern, (64, 64)).cpu().numpy()
+            # pp = torch.reshape(perturbed_pattern, (64, 64)).cpu().numpy()
+            # plt.imshow(p)
+            # plt.show()
+            # plt.imshow(pp)
+            # plt.show()
         
             perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
             print(f'Perturbed Hamming Score: {perturbed_hamming}')

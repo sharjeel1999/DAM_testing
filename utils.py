@@ -1,8 +1,18 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
 import copy
+import random
+
+def Combined_loss(generated, original):
+    mse_function = nn.MSELoss()
+    mse_l = mse_function(generated, original)
+    psnr_l = PSNR(generated, original)
+    # ssim_l = SSIM(generated, original, 64)
+    return mse_l+psnr_l#+ssim_l
+
 
 def gaussian_kernel(window_size, sigma=1.5):
         coords = torch.arange(window_size).float() - window_size // 2
@@ -19,6 +29,7 @@ def PSNR(img1, img2, max_pixel_value=1.0):
     return psnr.item()
 
 def SSIM(img1, img2, in_shape, window_size = 11, size_average = True, max_pixel_value = 1.0):
+    # print('ssim shapes: ', img1.shape, img2.shape)
     img1 = torch.reshape(img1, (in_shape, in_shape))
     img2 = torch.reshape(img2, (in_shape, in_shape))
 
@@ -149,5 +160,9 @@ def perturb_pattern(image, perturb_percentage, crop_percentage, corrupt_type):
     if corrupt_type == 'crop':
         k = 1 - crop_percentage
         kk = int(x*k)
-        image[:, kk:] = 0
+        rin = random.randint(0, kk)
+        rr = torch.rand(x)*255
+
+        image[:, kk:] = rr[kk:]
+        # image[:, rin:rin+kk] = -1
         return image
