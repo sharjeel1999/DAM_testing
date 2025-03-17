@@ -5,6 +5,7 @@ from torch import Tensor
 import torch.optim as optim
 
 from models.Hopfield_core import Hopfield_Core
+from models.layers import Linear_projection
 from utils import perturb_pattern, Thresh, Combined_loss
 
 import matplotlib.pyplot as plt
@@ -27,25 +28,25 @@ class Continous_DAM(Hopfield_Core):
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
 
-        self.query_proj = nn.Linear(self.pattern_size, self.mem_dim, bias = False)
-        self.key_proj = nn.Linear(self.mem_dim, self.mem_dim, bias = False)
-        self.value_proj = nn.Linear(self.mem_dim, self.mem_dim, bias = False)
-        self.output_proj = nn.Linear(self.mem_dim, self.pattern_size, bias = False)
+        self.query_proj = Linear_projection(self.pattern_size, self.mem_dim)
+        self.key_proj = Linear_projection(self.mem_dim, self.mem_dim)
+        self.value_proj = Linear_projection(self.mem_dim, self.mem_dim)
+        self.output_proj = Linear_projection(self.mem_dim, self.pattern_size)
 
-        # nn.init.normal_(self.weights, mean=0.0, std=0.02)
+        # nn.init.normal_(self.weights, mean = 1.0, std = 0.02)
 
         self.beta = 8
-        # self.parameters = [self.weights, 
-        #                 self.query_proj.weight, self.query_proj.bias,
-        #                 self.key_proj.weight, self.key_proj.bias,
-        #                 self.value_proj.weight, self.value_proj.bias,
-        #                 self.output_proj.weight, self.output_proj.bias]
-        
         self.parameters = [self.weights, 
-                        self.query_proj.weight,
-                        self.key_proj.weight,
-                        self.value_proj.weight,
-                        self.output_proj.weight,]
+                        self.query_proj.weight, self.query_proj.bias,
+                        self.key_proj.weight, self.key_proj.bias,
+                        self.value_proj.weight, self.value_proj.bias,
+                        self.output_proj.weight, self.output_proj.bias]
+        
+        # self.parameters = [self.weights, 
+        #                 self.query_proj.weight,
+        #                 self.key_proj.weight,
+        #                 self.value_proj.weight,
+        #                 self.output_proj.weight,]
 
         self.optimizer = optim.Adam(self.parameters, 0.001)
         self.loss_function = nn.MSELoss()

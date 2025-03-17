@@ -25,8 +25,8 @@ class Image_dataset(Dataset):
 
         self.transform = transforms.Compose([
             transforms.Resize(size=(96, 96)),
-            transforms.CenterCrop(size=(64, 64)),  # Adjust size to the desired height and width
-            # transforms.ToTensor()                   # Convert the image to a PyTorch tensor
+            transforms.CenterCrop(size=(64, 64)),
+            # transforms.ToTensor()              
         ])
 
         self.collect_to_array()
@@ -47,6 +47,7 @@ class Image_dataset(Dataset):
         inputs = {}
         if self.corrupt_flag == True:
             image = self.image_array[index]
+
             if image.shape[0] > self.limit_in:
                 image = Image.fromarray(image)
                 image = np.array(self.transform(image))
@@ -64,16 +65,15 @@ class Image_dataset(Dataset):
         
         else:
             image = self.image_array[index]
-            name_original = str(index) + '_orig.png'
-           
+
             if image.shape[0] > self.limit_in:
                 image = Image.fromarray(image)
                 image = np.array(self.transform(image))
-                name_original = str(index) + '_crop.png'
-            
+
             if self.args.pattern_type == 'binary':
                 image = Thresh(np.array([image.flatten()-0.5]))
             else:
                 image = np.array([image.flatten()])
+
             inputs['image'] = image
             return inputs
