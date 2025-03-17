@@ -36,8 +36,8 @@ parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
 
 # Continous Hopfield
-parser.add_argument('--mem_size', default = 4096, type = int) # 8192
-parser.add_argument('--mem_dim', default = 4096, type = int)
+parser.add_argument('--mem_size', default = 2048, type = int) # 8192
+parser.add_argument('--mem_dim', default = 2048, type = int)
 
 args = parser.parse_args()
 

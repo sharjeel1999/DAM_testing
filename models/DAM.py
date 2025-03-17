@@ -27,28 +27,21 @@ class Continous_DAM(Hopfield_Core):
         self.mem_dim = args.mem_dim
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
+        # nn.init.ones_(self.weights)
 
         self.query_proj = Linear_projection(self.pattern_size, self.mem_dim)
         self.key_proj = Linear_projection(self.mem_dim, self.mem_dim)
         self.value_proj = Linear_projection(self.mem_dim, self.mem_dim)
         self.output_proj = Linear_projection(self.mem_dim, self.pattern_size)
 
-        # nn.init.normal_(self.weights, mean = 1.0, std = 0.02)
 
         self.beta = 8
-        self.parameters = [self.weights, 
-                        self.query_proj.weight, self.query_proj.bias,
-                        self.key_proj.weight, self.key_proj.bias,
-                        self.value_proj.weight, self.value_proj.bias,
-                        self.output_proj.weight, self.output_proj.bias]
-        
-        # self.parameters = [self.weights, 
-        #                 self.query_proj.weight,
-        #                 self.key_proj.weight,
-        #                 self.value_proj.weight,
-        #                 self.output_proj.weight,]
 
-        self.optimizer = optim.Adam(self.parameters, 0.001)
+        # for name, param in self.named_parameters():
+        #     print(name, param.shape)
+
+        # self.optimizer = optim.Adam(self.parameters(), 0.001)
+        self.optimizer = optim.SGD(self.parameters(), 0.01)
         self.loss_function = nn.MSELoss()
         
     def association_forward(self, pattern):
