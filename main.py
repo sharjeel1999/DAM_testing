@@ -30,7 +30,7 @@ parser.add_argument('--pattern_type', default = 'continous')
 
 # Evaluation
 parser.add_argument('--perturb_percent', default = 0.2, type = float)
-parser.add_argument('--crop_percent', default = 0.1, type = float)
+parser.add_argument('--crop_percent', default = 0.2, type = float)
 parser.add_argument('--corrupt_type', default = 'crop', type = str)
 parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')

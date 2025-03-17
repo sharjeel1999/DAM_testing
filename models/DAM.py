@@ -27,18 +27,14 @@ class Continous_DAM(Hopfield_Core):
         self.mem_dim = args.mem_dim
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
-        # nn.init.ones_(self.weights)
+        nn.init.normal_(self.weights, mean = 0.0, std = 0.4)
 
         self.query_proj = Linear_projection(self.pattern_size, self.mem_dim)
         self.key_proj = Linear_projection(self.mem_dim, self.mem_dim)
         self.value_proj = Linear_projection(self.mem_dim, self.mem_dim)
         self.output_proj = Linear_projection(self.mem_dim, self.pattern_size)
 
-
         self.beta = 8
-
-        # for name, param in self.named_parameters():
-        #     print(name, param.shape)
 
         # self.optimizer = optim.Adam(self.parameters(), 0.001)
         self.optimizer = optim.SGD(self.parameters(), 0.01)

@@ -11,7 +11,7 @@ class Linear_projection(nn.Module):
         self.__initialize__()
 
     def __initialize__(self):
-        nn.init.normal_(self.l1.weight, mean = 0.0, std = 0.2)
+        nn.init.normal_(self.l1.weight, mean = 0.0, std = 0.02)
         # nn.init.ones_(self.ln1.weight)
         # nn.init.zeros_(self.ln1.bias)
 
