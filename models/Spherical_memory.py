@@ -5,6 +5,7 @@ from torch import Tensor
 import torch.optim as optim
 
 from models.Hopfield_core import Hopfield_Core
+from models.layers import Linear_projection
 from utils import perturb_pattern, Thresh, Combined_loss
 
 class Spherical_memory(Hopfield_Core):
@@ -25,13 +26,17 @@ class Spherical_memory(Hopfield_Core):
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
 
-        self.in_proj = nn.Linear(self.pattern_size, self.mem_dim)
-        self.W_proj = nn.Linear(self.mem_dim, self.mem_dim)
-        self.WT_proj = nn.Linear(self.mem_dim, self.mem_dim)
-        self.output_proj = nn.Linear(self.mem_dim, self.pattern_size)
+        self.in_proj = Linear_projection(self.pattern_size, self.mem_dim)
+        self.W_proj = Linear_projection(self.mem_dim, self.mem_dim)
+        self.WT_proj = Linear_projection(self.mem_dim, self.mem_dim)
+        self.output_proj = Linear_projection(self.mem_dim, self.pattern_size)
 
-    def association(self, pattern):
-        pattern = self.query_proj(pattern)
+        # self.optimizer = optim.Adam(self.parameters(), 0.001)
+        self.optimizer = optim.SGD(self.parameters(), 0.01)
+        self.loss_function = nn.MSELoss()
+
+    def association_forward(self, pattern):
+        pattern = self.in_proj(pattern)
         W = self.W_proj(self.weights)
         WT = self.WT_proj(self.weights)
 
@@ -40,15 +45,52 @@ class Spherical_memory(Hopfield_Core):
         else:
             pattern = F.normalize(pattern, p = 2, dim = 1)
         
-        inter_mul = torch.matmul(pattern, WT.t()) / (self.mem_dim ** 0.5)
+        inter_mul = F.softmax(torch.matmul(pattern, WT.t()) / (self.mem_dim ** 0.5), dim = 1)
+        attn_out = torch.matmul(inter_mul, W)
 
+        output = self.output_proj(attn_out)
+        return output
 
     def train(self, pattern_loader):
-        print('write')
         for e in range(self.training_epochs):
             for pattern_dict in pattern_loader:
                 pattern = torch.squeeze(pattern_dict['image']).float()
                 perturbed_pattern = perturb_pattern(pattern.clone(), self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
 
-    def recall(self):
-        print('write')
+                associated_output = self.association_forward(perturbed_pattern.to(self.args.device))
+                loss = self.loss_function(associated_output, pattern.to(self.args.device))
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+        self.save_weights()
+
+
+    def recall(self, pattern_loader, steps=5):
+        self.load_weights()
+
+        for m, pattern_dict in enumerate(pattern_loader):
+            print('index: ', m)
+            pattern = torch.squeeze(pattern_dict['image']).float()
+            perturbed_pattern = torch.squeeze(pattern_dict['perturbed']).float()
+            p_in = perturbed_pattern.clone()
+        
+            perturbed_hamming = self.calculate_similarity(perturbed_pattern, pattern)
+            print(f'Perturbed Hamming Score: {perturbed_hamming}')
+
+            print(f'Recovering pattern for {steps} steps.')
+            for s in range(steps):
+                perturbed_pattern = perturbed_pattern.unsqueeze(dim = 0)
+                perturbed_pattern = self.association_forward(perturbed_pattern.to(self.args.device))
+                perturbed_pattern = torch.squeeze(perturbed_pattern)
+                
+                sim_score = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy(), pattern)
+                if self.args.pattern_type == 'binary':
+                    print(f"Step: {s}, Hamming Score: {sim_score['hamming']}")
+                else:
+                    print(f"Step: {s}, MSE: {sim_score['MSE']} (Lower Better)")
+                    print(f"Step: {s}, PSNR: {sim_score['PSNR']} (Higher Better)")
+                    print(f"Step: {s}, SSIM: {sim_score['SSIM']} (Higher Better)")
+
+            self.save_files(pattern, perturbed_pattern, p_in, m)

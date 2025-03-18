@@ -27,7 +27,8 @@ class Continous_DAM(Hopfield_Core):
         self.mem_dim = args.mem_dim
 
         self.weights = nn.Parameter(torch.rand((self.mem_size, self.mem_dim)))
-        nn.init.normal_(self.weights, mean = 0.0, std = 0.4)
+        nn.init.normal_(self.weights, mean = 0.0, std = 0.6)
+
 
         self.query_proj = Linear_projection(self.pattern_size, self.mem_dim)
         self.key_proj = Linear_projection(self.mem_dim, self.mem_dim)

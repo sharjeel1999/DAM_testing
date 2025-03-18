@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Network Details')
 
 
 # General details
-parser.add_argument('--model', default = 'DAM', type = str)
+parser.add_argument('--model', default = 'spherical', type = str) # classical, DAM, spherical
 parser.add_argument('--pattern_size', default = 4096, type = int)
 parser.add_argument('--training_epochs', default = 500, type = int)
 parser.add_argument('--device', default = 'cuda:0')
@@ -30,7 +30,7 @@ parser.add_argument('--pattern_type', default = 'continous')
 
 # Evaluation
 parser.add_argument('--perturb_percent', default = 0.2, type = float)
-parser.add_argument('--crop_percent', default = 0.2, type = float)
+parser.add_argument('--crop_percent', default = 0.1, type = float)
 parser.add_argument('--corrupt_type', default = 'crop', type = str)
 parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
@@ -42,8 +42,8 @@ parser.add_argument('--mem_dim', default = 2048, type = int)
 args = parser.parse_args()
 
 
-weight_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\weights.pth'
-visual_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\visual_saves'
+weight_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\spherical_memory\\weights.pth'
+visual_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\spherical_memory\\visual_saves'
 
 model = build_model(args, weight_folder, visual_folder).to(args.device)
 print(model)
