@@ -16,9 +16,9 @@ parser = argparse.ArgumentParser(description='Network Details')
 
 
 # General details
-parser.add_argument('--model', default = 'spherical', type = str) # classical, DAM, spherical
+parser.add_argument('--model', default = 'DAM', type = str) # classical, DAM, spherical
 parser.add_argument('--pattern_size', default = 4096, type = int)
-parser.add_argument('--training_epochs', default = 500, type = int)
+parser.add_argument('--training_epochs', default = 200, type = int)
 parser.add_argument('--device', default = 'cuda:0')
 
 # Data details
@@ -36,8 +36,8 @@ parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
 
 # Continous Hopfield
-parser.add_argument('--mem_size', default = 2048, type = int) # 8192
-parser.add_argument('--mem_dim', default = 2048, type = int)
+parser.add_argument('--mem_size', default = 4096, type = int) # 8192
+parser.add_argument('--mem_dim', default = 4096, type = int)
 
 args = parser.parse_args()
 
