@@ -6,6 +6,20 @@ import numpy as np
 import copy
 import random
 
+def hadamard_matrix(n):
+    if (n & (n - 1)) != 0 or n <= 0:
+        raise ValueError("n must be a power of 2")
+
+    H = np.array([[1]])
+
+    while H.shape[0] < n:
+        H = np.block([[H, H],
+                      [H, -H]])
+        
+    H = np.where(H < -1, 0, 1)
+    return H
+
+
 def Combined_loss(generated, original):
     mse_function = nn.MSELoss()
     mse_l = mse_function(generated, original)

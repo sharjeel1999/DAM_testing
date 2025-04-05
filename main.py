@@ -15,9 +15,11 @@ def create_loader(args, corrupt_flag, batch_size):
 parser = argparse.ArgumentParser(description='Network Details')
 
 
+parser.add_argument('--emb_size', default = 512, type = int) # 512
+
 # General details
 parser.add_argument('--model', default = 'DAM', type = str) # classical, DAM, spherical
-parser.add_argument('--pattern_size', default = 4096 + 500, type = int)
+parser.add_argument('--pattern_size', default = 4096 + 512, type = int)
 parser.add_argument('--training_epochs', default = 400, type = int)
 parser.add_argument('--device', default = 'cuda:0')
 
@@ -36,8 +38,8 @@ parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
 
 # Continous Hopfield
-parser.add_argument('--mem_size', default = 4096 + 500, type = int) # 8192
-parser.add_argument('--mem_dim', default = 4096 + 500, type = int)
+parser.add_argument('--mem_size', default = 4096 + 512, type = int) # 8192
+parser.add_argument('--mem_dim', default = 4096 + 512, type = int)
 
 args = parser.parse_args()
 

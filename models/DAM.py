@@ -62,7 +62,7 @@ class Continous_DAM(Hopfield_Core):
 
         self.layer1 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         self.layer2 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
-        # self.layer3 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
+        self.layer3 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         # self.layer4 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         # self.layer5 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
 
@@ -76,7 +76,7 @@ class Continous_DAM(Hopfield_Core):
 
         attn_output = self.layer1(q)
         attn_output = self.layer2(attn_output)
-        # attn_output = self.layer3(attn_output)
+        attn_output = self.layer3(attn_output)
         # attn_output = self.layer4(attn_output)
         # attn_output = self.layer5(attn_output)
 
@@ -125,7 +125,7 @@ class Continous_DAM(Hopfield_Core):
             # plt.imshow(pp)
             # plt.show()
         
-            perturbed_hamming = self.calculate_similarity(perturbed_pattern[500:], pattern[500:])
+            perturbed_hamming = self.calculate_similarity(perturbed_pattern[self.args.emb_size:], pattern[self.args.emb_size:])
             print(f'Perturbed Hamming Score: {perturbed_hamming}')
 
             print(f'Recovering pattern for {steps} steps.')
@@ -135,7 +135,7 @@ class Continous_DAM(Hopfield_Core):
                 perturbed_pattern = torch.squeeze(perturbed_pattern)
                 
 
-                sim_score = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy()[500:], pattern[500:])
+                sim_score = self.calculate_similarity(perturbed_pattern.detach().cpu().numpy()[self.args.emb_size:], pattern[self.args.emb_size:])
                 if self.args.pattern_type == 'binary':
                     print(f"Step: {s}, Hamming Score: {sim_score['hamming']}")
                 else:
@@ -143,7 +143,7 @@ class Continous_DAM(Hopfield_Core):
                     print(f"Step: {s}, PSNR: {sim_score['PSNR']} (Higher Better)")
                     print(f"Step: {s}, SSIM: {sim_score['SSIM']} (Higher Better)")
                     
-            self.save_files(pattern[500:], perturbed_pattern[500:], p_in[500:], m)
+            self.save_files(pattern[self.args.emb_size:], perturbed_pattern[self.args.emb_size:], p_in[self.args.emb_size:], m)
             mean_MSE.append(sim_score['MSE'])
             mean_PSNR.append(sim_score['PSNR'])
             mean_SSIM.append(sim_score['SSIM'])

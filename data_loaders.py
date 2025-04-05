@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
-from utils import perturb_pattern, Thresh
+from utils import perturb_pattern, Thresh, hadamard_matrix
 
 
 class Image_dataset(Dataset):
@@ -29,13 +29,14 @@ class Image_dataset(Dataset):
             # transforms.ToTensor()              
         ])
 
+        self.emb_size = 512
+        self.H = np.array(hadamard_matrix(self.emb_size))
+
         self.collect_to_array()
 
+
     def create_embedding(self, i):
-        emb = np.zeros(500)
-        for z in range(500):
-            if z % i == 0:
-                emb[z] = 1
+        emb = self.H[i]
         return emb
 
     def collect_to_array(self):
@@ -45,7 +46,7 @@ class Image_dataset(Dataset):
             if i < self.num_images:
                 image_path = os.path.join(self.folder_path, name)
                 image = cv2.imread(image_path, 0)
-                emb = self.create_embedding(i+1)
+                emb = self.create_embedding(i)
                 self.image_array.append([image, emb])
 
     def __len__(self):
