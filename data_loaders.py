@@ -31,6 +31,13 @@ class Image_dataset(Dataset):
 
         self.collect_to_array()
 
+    def create_embedding(self, i):
+        emb = np.zeros(500)
+        for z in range(500):
+            if z % i == 0:
+                emb[z] = 1
+        return emb
+
     def collect_to_array(self):
         self.image_array = []
 
@@ -38,7 +45,8 @@ class Image_dataset(Dataset):
             if i < self.num_images:
                 image_path = os.path.join(self.folder_path, name)
                 image = cv2.imread(image_path, 0)
-                self.image_array.append(image)
+                emb = self.create_embedding(i+1)
+                self.image_array.append([image, emb])
 
     def __len__(self):
         return len(self.image_array)
@@ -46,7 +54,7 @@ class Image_dataset(Dataset):
     def __getitem__(self, index):
         inputs = {}
         if self.corrupt_flag == True:
-            image = self.image_array[index]
+            image, emb = self.image_array[index]
 
             if image.shape[0] > self.limit_in:
                 image = Image.fromarray(image)
@@ -59,12 +67,14 @@ class Image_dataset(Dataset):
 
             perturbed_image = perturb_pattern(image.copy(), self.args.perturb_percent, self.args.crop_percent, self.args.corrupt_type)
             
-            inputs['image'] = image
-            inputs['perturbed'] = perturbed_image
+            emb = np.expand_dims(np.array(emb), axis = 0)
+            # print('--- emb shape: ', emb.shape)
+            inputs['image'] = np.concatenate((emb, image), axis = 1)
+            inputs['perturbed'] = np.concatenate((emb, perturbed_image), axis = 1)
             return inputs
         
         else:
-            image = self.image_array[index]
+            image, emb = self.image_array[index]
 
             if image.shape[0] > self.limit_in:
                 image = Image.fromarray(image)
@@ -75,5 +85,6 @@ class Image_dataset(Dataset):
             else:
                 image = np.array([image.flatten()])
 
-            inputs['image'] = image
+            emb = np.expand_dims(np.array(emb), axis = 0)
+            inputs['image'] = np.concatenate((emb, image), axis = 1)
             return inputs

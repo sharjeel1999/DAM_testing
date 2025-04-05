@@ -17,8 +17,8 @@ parser = argparse.ArgumentParser(description='Network Details')
 
 # General details
 parser.add_argument('--model', default = 'DAM', type = str) # classical, DAM, spherical
-parser.add_argument('--pattern_size', default = 4096, type = int)
-parser.add_argument('--training_epochs', default = 200, type = int)
+parser.add_argument('--pattern_size', default = 4096 + 500, type = int)
+parser.add_argument('--training_epochs', default = 400, type = int)
 parser.add_argument('--device', default = 'cuda:0')
 
 # Data details
@@ -36,19 +36,19 @@ parser.add_argument('--evaluation_metric', default = 'hamming')
 # parser.add_argument('--save_files', default = 'binary')
 
 # Continous Hopfield
-parser.add_argument('--mem_size', default = 4096, type = int) # 8192
-parser.add_argument('--mem_dim', default = 4096, type = int)
+parser.add_argument('--mem_size', default = 4096 + 500, type = int) # 8192
+parser.add_argument('--mem_dim', default = 4096 + 500, type = int)
 
 args = parser.parse_args()
 
 
-weight_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\spherical_memory\\weights.pth'
-visual_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\spherical_memory\\visual_saves'
+weight_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\weights.pth'
+visual_folder = 'O:\\PCodes\\Associative_memory\\All_saves\\continous_DAM\\visual_saves'
 
 model = build_model(args, weight_folder, visual_folder).to(args.device)
 print(model)
 
-training_loader = create_loader(args, corrupt_flag = False, batch_size = args.batch_size)
+training_loader = create_loader(args, corrupt_flag = True, batch_size = args.batch_size)
 model.train(training_loader)
 print('--- Done training ---')
 
