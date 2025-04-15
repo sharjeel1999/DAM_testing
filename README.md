@@ -15,4 +15,5 @@ Only dense associative network and spherical memory is tested on `64x64` RGB ima
 
 Both architectures fail to retrieve the proper image during the inference. This points towards the possibility that the memory landspace has
 collapsed into a single metastable state. This would cause the model to output a mean of all the stored patterns no matter what the input pattern is.
+
 ![Compiled Results](imgs/compiled_results.png)
