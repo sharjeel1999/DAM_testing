@@ -63,7 +63,7 @@ class Continous_DAM(Hopfield_Core):
         self.layer1 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         self.layer2 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         self.layer3 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
-        # self.layer4 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
+        self.layer4 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
         # self.layer5 = DAM_layer(self.mem_size, self.mem_dim, self.beta)
 
 
@@ -77,7 +77,7 @@ class Continous_DAM(Hopfield_Core):
         attn_output = self.layer1(q)
         attn_output = self.layer2(attn_output)
         attn_output = self.layer3(attn_output)
-        # attn_output = self.layer4(attn_output)
+        attn_output = self.layer4(attn_output)
         # attn_output = self.layer5(attn_output)
 
         output = self.output_proj(attn_output)

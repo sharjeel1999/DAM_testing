@@ -26,8 +26,8 @@ parser.add_argument('--device', default = 'cuda:0')
 # Data details
 parser.add_argument('--folder_path', default = 'test_images\\cont', type = str)
 parser.add_argument('--input_shape', default = 64) #64
-parser.add_argument('--num_images', default = 2, type = int)
-parser.add_argument('--batch_size', default = 2, type = int)
+parser.add_argument('--num_images', default = 3, type = int)
+parser.add_argument('--batch_size', default = 3, type = int)
 parser.add_argument('--pattern_type', default = 'continous')
 
 # Evaluation
